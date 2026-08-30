@@ -1,0 +1,15 @@
+/planning - planning mode
+
+/fast - execute mode
+
+/artifact - review last artifact
+
+ctrl + r - reviewing artifacts
+
+/rewind - go back in time for the conver
+
+/fork - takes the conversation to another branch (you can use if youre uncertain of some changes and don't want to impact the main branch), /resume goes back to main branch
+
+agy --dangerously-skip-permissions - (AI doesn't ask you permission for anything just does everything by default)
+
+agy --sandbox --dangerously-skip-permissions - (does everyhting by default unless it goes outside of the scope of the project)
