@@ -1,0 +1,29 @@
+Build a Kimball star schema in the Supabase Postgres database from the CSV at `data/Sample - Superstore.csv`, then load it. Write and run a single Python script (`build_star_schema.py`) that does everything end-to-end.
+
+Connection: Read credentials from the `.env` file in the project root (keys: `host`, `port`, `database`, `user`, `password`). Connect with `psycopg2` (already installed). These are Supabase session pooler creds over IPv4 — use them exactly as given; do NOT switch to the direct `db.*.supabase.co` host (it won't resolve). The CSV is `latin-1` encoded.
+
+Grain: one row per order line (`Row ID` is unique; `Order ID` repeats). The CSV has 9,994 rows.
+
+Tables to create (use surrogate integer PKs, e.g. SERIAL):
+
+* `dim_customer` — natural key `Customer ID`; attributes: customer_name, segment (793 rows)
+* `dim_product` — natural key = (`Product ID`, `Product Name`) combined, because some Product IDs map to multiple names; attributes: product_id, product_name, category, sub_category (~1,862 rows)
+* `dim_geography` — natural key = (country, state, city, postal_code) tuple; attributes: country, region, state, city, postal_code (~630 rows)
+* `dim_ship_mode` — natural key `Ship Mode`; attribute: ship_mode (4 rows)
+* `dim_date` — one date per row; attributes: date (PK date or surrogate), year, quarter, month, month_name, day, day_of_week. This is a role-playing dimension referenced twice by the fact.
+* `fact_sales` — grain = order line. Columns:
+   * FKs: customer_key, product_key, geography_key, ship_mode_key, order_date_key, ship_date_key
+   * Degenerate dimension: order_id (keep on the fact, no separate order table)
+   * Measures: sales (numeric), quantity (int), discount (numeric), profit (numeric)
+
+Load order & rules:
+
+1. Create all tables with proper FK constraints and indexes on the fact's FK columns.
+2. Parse dates from `M/D/YYYY` format. Populate `dim_date` with the distinct set of all Order Dates AND Ship Dates.
+3. Load each dimension, capturing the natural-key → surrogate-key mapping in memory.
+4. Load `fact_sales`, resolving each natural key to its surrogate key. Use batched inserts (`execute_values`) for speed.
+5. Make the script idempotent — `DROP TABLE IF EXISTS ... CASCADE` for all six tables at the start so it can be re-run cleanly.
+
+Validation (print at the end): row count of `fact_sales` (must equal 9,994) and row counts of every dimension. Also run one sanity join, e.g. total sales by `dim_product.category`, and print it.
+
+Keep everything in the `public` schema. After it runs successfully, show me the final validation output.
