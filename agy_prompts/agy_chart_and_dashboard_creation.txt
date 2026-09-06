@@ -1,0 +1,22 @@
+Using the superset MCP, build a complete BI analysis on top of my Superstore star schema (public.fact_sales + dim_customer, dim_product, dim_geography, dim_ship_mode, dim_date). Do it in this order and report what you create at each step.
+1. Create a virtual (SQL) dataset named sales_analysis that joins the fact to all dimensions, exposing these columns: order_id, order_date (from dim_date), order_year, order_quarter, order_month, order_month_name, customer_name, segment, category, sub_category, product_name, country, region, state, city, ship_mode, and the measures sales, quantity, discount, profit. Use this as the base dataset for all charts below.
+2. Define these reusable metrics on the dataset: total_sales = SUM(sales), total_profit = SUM(profit), total_quantity = SUM(quantity), order_count = COUNT(DISTINCT order_id), profit_margin = SUM(profit)/NULLIF(SUM(sales),0).
+3. Create these charts (pick sensible Superset viz types):
+KPI Big Number tiles: Total Sales, Total Profit, Profit Margin %, and Order Count
+Line/area chart: Sales and Profit by month (order_month) over time
+Bar chart: Sales by Category
+Bar chart (sorted): Profit by Sub-Category — make it clear which sub-categories are unprofitable (negative profit)
+Bar chart: Sales by Region
+Pie/Donut: Sales by Segment
+US Map (choropleth by state): Sales by State
+Bar chart: Top 10 Products by Sales
+Bar chart: Top 10 Customers by Sales
+Bar chart: Profit Margin % by Category
+Scatter plot: Discount vs Profit (to show how discounting erodes profit)
+Bar/pie: Order Count by Ship Mode
+4. Assemble three dashboards:
+"Superstore — Executive Overview": the 4 KPI tiles, the monthly Sales/Profit trend, Sales by Category, Sales by Region, Sales by Segment.
+"Superstore — Product Performance": Profit by Sub-Category, Top 10 Products, Profit Margin % by Category, Discount vs Profit scatter.
+"Superstore — Geography & Customers": Sales by State map, Sales by Region, Top 10 Customers, Order Count by Ship Mode.
+Add a time-range filter on order_date and a category filter to each dashboard where it makes sense. When done, give me the direct URLs to the three dashboards.
+Side note (fallback): If the superset MCP has no "create virtual dataset from SQL" tool, instead create the sales_analysis view directly in Postgres (via the Supabase connection) with the same joins/columns, then register that view as a physical dataset in Superset — same end result. Proceed automatically with this fallback without stopping to ask.

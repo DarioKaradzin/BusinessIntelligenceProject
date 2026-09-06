@@ -1,0 +1,98 @@
+1. What were our total sales and profit in 2017?
+
+SELECT ROUND(SUM(f.sales)::numeric, 2)  AS total_sales,
+       ROUND(SUM(f.profit)::numeric, 2) AS total_profit
+FROM public.fact_sales f
+JOIN public.dim_date d ON f.order_date_key = d.date_key
+WHERE d.year = 2017;
+
+Expected: sales 733,215.26, profit 93,439.27
+
+------------------------------------------------------------
+
+2. Which product sub-categories are losing us money?
+
+SELECT p.sub_category, ROUND(SUM(f.profit)::numeric, 2) AS total_profit
+FROM public.fact_sales f
+JOIN public.dim_product p ON f.product_key = p.product_key
+GROUP BY p.sub_category
+HAVING SUM(f.profit) < 0
+ORDER BY total_profit ASC;
+
+Expected: Tables (-17,725), Bookcases (-3,472), Supplies (-1,189)
+
+------------------------------------------------------------
+
+3. Who are our top 5 customers by total sales?
+
+SELECT c.customer_name, ROUND(SUM(f.sales)::numeric, 2) AS total_sales
+FROM public.fact_sales f
+JOIN public.dim_customer c ON f.customer_key = c.customer_key
+GROUP BY c.customer_name
+ORDER BY total_sales DESC
+LIMIT 5;
+
+Expected: Sean Miller, Tamara Chand, Raymond Buch, Tom Ashbrook, Adrian Barton
+
+------------------------------------------------------------
+
+4. What is the profit margin for each product category?
+
+SELECT p.category,
+       ROUND((SUM(f.profit) / NULLIF(SUM(f.sales), 0))::numeric, 4) AS profit_margin
+FROM public.fact_sales f
+JOIN public.dim_product p ON f.product_key = p.product_key
+GROUP BY p.category
+ORDER BY profit_margin DESC;
+
+Expected: Technology 17.4%, Office Supplies 17.0%, Furniture 2.5%
+
+------------------------------------------------------------
+
+5. Which region generates the most sales?
+
+SELECT g.region, ROUND(SUM(f.sales)::numeric, 2) AS total_sales
+FROM public.fact_sales f
+JOIN public.dim_geography g ON f.geography_key = g.geography_key
+GROUP BY g.region
+ORDER BY total_sales DESC;
+
+Expected: West highest, then East, Central, South
+
+------------------------------------------------------------
+
+6. Show me monthly sales over time.
+
+SELECT d.year, d.month, d.month_name,
+       ROUND(SUM(f.sales)::numeric, 2) AS total_sales
+FROM public.fact_sales f
+JOIN public.dim_date d ON f.order_date_key = d.date_key
+GROUP BY d.year, d.month, d.month_name
+ORDER BY d.year, d.month;
+
+Expected: 48 rows (12 months x 4 years), sales trending up year over year
+
+------------------------------------------------------------
+
+7. What's the average discount on order lines that lost money vs profitable ones?
+
+SELECT CASE WHEN f.profit < 0 THEN 'loss' ELSE 'profit' END AS outcome,
+       COUNT(*) AS line_count,
+       ROUND(AVG(f.discount)::numeric, 4) AS avg_discount
+FROM public.fact_sales f
+GROUP BY CASE WHEN f.profit < 0 THEN 'loss' ELSE 'profit' END
+ORDER BY outcome;
+
+Expected: loss lines 48% avg discount, profit lines 8%
+
+------------------------------------------------------------
+
+8. How many distinct orders use each ship mode?
+
+SELECT s.ship_mode, COUNT(DISTINCT f.order_id) AS order_count
+FROM public.fact_sales f
+JOIN public.dim_ship_mode s ON f.ship_mode_key = s.ship_mode_key
+GROUP BY s.ship_mode
+ORDER BY order_count DESC;
+
+Expected: Standard Class most, then Second Class, First Class, Same Day
